@@ -33,6 +33,11 @@ func GetDb(name string) (*gorm.DB, error) {
 
 	conf := dbConf[name]
 
+	//判断配置数据库类型
+	if conf.Type != "mysql" {
+		return nil, errors.New("Database config '" + name + "' type is not sqlserver.")
+	}
+
 	dsnParam := ""
 	if conf.Param != "" {
 		dsnParam = "?" + conf.Param
