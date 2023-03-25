@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/go-gourd/gourd/config"
 	"github.com/go-gourd/gourd/logger"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 	"time"
@@ -16,7 +16,7 @@ var dbs = make(map[string]*gorm.DB)
 type LogWriter struct{}
 
 func (w LogWriter) Printf(format string, args ...any) {
-	logger.Errorf(format, args...)
+	logger.Warnf(format, args...)
 }
 
 // GetDb 获取数据库连接
@@ -34,7 +34,7 @@ func GetDb(name string) (*gorm.DB, error) {
 	conf := dbConf[name]
 
 	//判断配置数据库类型
-	if conf.Type != "mysql" {
+	if conf.Type != "postgres" {
 		return nil, errors.New("Database config '" + name + "' type is not sqlserver.")
 	}
 
@@ -42,8 +42,8 @@ func GetDb(name string) (*gorm.DB, error) {
 	if conf.Param != "" {
 		dsnParam = "?" + conf.Param
 	}
-	dsnF := "%s:%s@(%s:%d)/%s%s"
-	dsn := fmt.Sprintf(dsnF, conf.User, conf.Pass, conf.Host, conf.Port, conf.Database, dsnParam)
+	dsnF := "host=%s user=%s password=%s dbname=%s port=%d %s"
+	dsn := fmt.Sprintf(dsnF, conf.Host, conf.User, conf.Pass, conf.Database, conf.Port, dsnParam)
 
 	// 慢日志阈值
 	slowLogTime := conf.SlowLogTime
@@ -62,7 +62,7 @@ func GetDb(name string) (*gorm.DB, error) {
 	)
 
 	// 连接数据库
-	newDb, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	newDb, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: newLogger,
 	})
 	if err != nil {
